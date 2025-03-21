@@ -1,11 +1,9 @@
 import sys
 from io import StringIO
-sys.modules['StringIO'] = StringIO
+sys.modules['StringIO'] = StringIO #applies patch to StringIO for Streamlit Deployment
 
 import ee
 import streamlit as st
-import geemap.foliumap as geemap
-import datetime
 import json
 
 # to initialize this project locally, follow these steps:
@@ -39,6 +37,10 @@ else:
     except Exception as e:
         ee.Authenticate()
         ee.Initialize(project='gravitasuhisteveapi')
+
+
+import geemap.foliumap as geemap
+import datetime #libraries are imported after google earth engine is initialized 
 
 
 # Create Streamlit app layout
