@@ -1,0 +1,6 @@
+ee
+streamlit
+geemap
+setuptools
+earthengine-api
+folium
