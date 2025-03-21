@@ -20,25 +20,6 @@ import json
 
 # 6. Once you're set up, you can run + test the application dashborad by running streamlit run prototype_v1.py on the terminal
 
-
-# For Streamlit Cloud deployment
-if 'gcp_service_account' in st.secrets:
-    # Convert AttrDict to regular dict
-    service_account = dict(st.secrets['gcp_service_account'])
-    credentials = ee.ServiceAccountCredentials(
-        service_account['client_email'],
-        key_data=json.dumps(service_account)
-    )
-    ee.Initialize(credentials)
-else:
-    # Fallback for local development
-    try:
-        ee.Initialize(project='gravitasuhisteveapi')
-    except Exception as e:
-        ee.Authenticate()
-        ee.Initialize(project='gravitasuhisteveapi')
-
-
 import geemap.foliumap as geemap
 import datetime #libraries are imported after google earth engine is initialized 
 
