@@ -1,3 +1,7 @@
+import sys
+from io import StringIO
+sys.modules['StringIO'] = StringIO
+
 import ee
 import streamlit as st
 import geemap.foliumap as geemap
