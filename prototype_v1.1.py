@@ -5,38 +5,28 @@ sys.modules['StringIO'] = StringIO #applies patch to StringIO for Streamlit Depl
 import ee
 import streamlit as st
 import json
-
-# to initialize this project locally, follow these steps:
-
-# 1. Create a virtual environment or .venv in your file directory with: python -m venv .venv and activate it w/  .venv\Scripts\activate on Windows or w/   source .venv/bin/activate on Mac
-
-# 2. Install the required libraries above with pip install ee streamlit geemap datetime setuptools earthengine-api folium
-
-# 3. Set up a GOOGLE_CLOUD_KEY in a .env file in the same directory and make sure that the earth engine api is enabled on google's developer console
-
-# 4. Make sure to change the project name in ee.Initialize to your project name in Google Cloud
-
-# 5. Upon first running this, it should execute an oAuth workflow with google to verify the key. if you face errors make sure the key credentials are set up correectly in google cloud 
-
-# 6. Once you're set up, you can run + test the application dashborad by running streamlit run prototype_v1.py on the terminal
+from google.oauth2 import service_account  # Add this import
 
 # For Streamlit Cloud deployment
 if 'gcp_service_account' in st.secrets:
-     # Convert AttrDict to regular dict
-     service_account = dict(st.secrets['gcp_service_account'])
-     credentials = ee.ServiceAccountCredentials(
-         service_account['client_email'],
-         key_data=json.dumps(service_account)
-     )
-     ee.Initialize(credentials)
+    # Convert AttrDict to regular dict
+    service_account_info = dict(st.secrets['gcp_service_account'])
+    
+    # Create credentials using google.oauth2
+    credentials = service_account.Credentials.from_service_account_info(
+        service_account_info,
+        scopes=['https://www.googleapis.com/auth/earthengine']
+    )
+    
+    # Initialize Earth Engine with the credentials
+    ee.Initialize(credentials)
 else:
-     # Fallback for local development
+    # Fallback for local development
     try:
-         ee.Initialize(project='gravitasuhisteveapi')
+        ee.Initialize(project='gravitasuhisteveapi')
     except Exception as e:
-         ee.Authenticate()
-         ee.Initialize(project='gravitasuhisteveapi')
-
+        ee.Authenticate()
+        ee.Initialize(project='gravitasuhisteveapi')
 
 import geemap.foliumap as geemap
 import datetime #libraries are imported after google earth engine is initialized 
