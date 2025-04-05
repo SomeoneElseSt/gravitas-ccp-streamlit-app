@@ -1,6 +1,17 @@
+#to use streamlit
 streamlit
+
+# only import geemap, do not import ee. ee is default in geemap
 geemap
+
+#to deploy with streamlit
 setuptools
+
+# to use google's earth engine api
 earthengine-api
+
+#for map display
 folium
+
+# for authentication with google
 google-auth
