@@ -288,4 +288,4 @@ st.latex(r'''UTFVI = \frac {LST - LSTm} {LST}''')
 st.write("**Area of Interest (AOI)**: This is an outline of the area that will be analyzed. It is important to get the average LST of the area to calculate the UHI.")
 
 st.header("Prototype Notes")
-st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g., Belgrade). This is due to limitations of the Landsat's 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
+st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
