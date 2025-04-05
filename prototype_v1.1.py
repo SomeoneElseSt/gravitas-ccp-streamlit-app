@@ -257,11 +257,11 @@ if st.button("Process Imagery"):
         }
         
         # Add layers to map
-        Map.addLayer(image, vis_params, 'True Color (432)')
-        Map.addLayer(ndvi, {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}, 'Normalized Difference Vegetation Index')
-        Map.addLayer(lst, lst_vis, 'Land Surface Temperature')
-        Map.addLayer(uhi, uhi_vis, 'Urban Heat Index')
-        Map.addLayer(utfvi, utfvi_vis, 'Urban Thermal Field Variance Index')
+        Map.addLayer(image, vis_params, 'True Color (432)', True, 0.7)
+        Map.addLayer(ndvi, {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}, 'Normalized Difference Vegetation Index', True, 0.7)
+        Map.addLayer(lst, lst_vis, 'Land Surface Temperature', True, 0.7)
+        Map.addLayer(uhi, uhi_vis, 'Urban Heat Index', True, 0.7)
+        Map.addLayer(utfvi, utfvi_vis, 'Urban Thermal Field Variance Index', True, 0.7)
         
         # Display LST statistics
         st.write(f"Mean LST (Land Surface Temperature) in {selected_city}: {lst_mean.getInfo():.2f}°C")
