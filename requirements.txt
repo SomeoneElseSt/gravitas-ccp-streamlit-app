@@ -4,3 +4,4 @@ geemap
 setuptools
 earthengine-api
 folium
+google-auth
