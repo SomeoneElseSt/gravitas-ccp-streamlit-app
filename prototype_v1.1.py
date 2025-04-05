@@ -4,15 +4,15 @@ sys.modules['StringIO'] = StringIO #applies patch to StringIO for Streamlit Depl
 
 import streamlit as st
 import json
-import geemap 
+import ee
+import geemap.core as geemap_core  # Import just the core module
 
 # Use geemap for authentication
-geemap.ee_initialize(project='gravitasuhisteveapi')
+geemap_core.ee_initialize(project='gravitasuhisteveapi-450908')
 
-import ee
-from google.oauth2 import service_account  # Add this import
+# Now import the rest of geemap after Earth Engine is initialized
 import geemap.foliumap as geemap
-import datetime #libraries are imported after google earth engine is initialized 
+import datetime
 
 
 # Create Streamlit app layout
