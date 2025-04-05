@@ -14,10 +14,10 @@ if 'gcp_service_account' in st.secrets:
         service_account_info,
         scopes=['https://www.googleapis.com/auth/earthengine']
     )
-    ee.Initialize(credentials)
+    ee.initialize(credentials)
 else:
     try:
-        ee.Initialize(project='gravitasuhisteveapi-450908')
+        ee.initialize(project='gravitasuhisteveapi-450908')
     except Exception as e:
         ee.Authenticate()
         ee.Initialize(project='gravitasuhisteveapi-450908')
