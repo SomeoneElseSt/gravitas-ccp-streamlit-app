@@ -7,7 +7,7 @@ import json
 import geemap 
 
 # Use geemap for authentication
-geemap.ee_initialize(project='gravitasuhisteveapi-450908')
+geemap.ee_initialize(project='gravitasuhisteveapi')
 
 import ee
 from google.oauth2 import service_account  # Add this import
