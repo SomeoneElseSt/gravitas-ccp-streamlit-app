@@ -5,10 +5,10 @@ sys.modules['StringIO'] = StringIO #applies patch to StringIO for Streamlit Depl
 import streamlit as st
 import json
 import ee
-import geemap.core as geemap_core  # Import just the core module
+import geemap
 
 # Use geemap for authentication
-geemap_core.ee_initialize(project='gravitasuhisteveapi-450908')
+geemap.ee_initialize(project='gravitasuhisteveapi-450908')
 
 # Now import the rest of geemap after Earth Engine is initialized
 import geemap.foliumap as geemap
