@@ -1,4 +1,3 @@
-ee
 streamlit
 geemap
 setuptools
