@@ -8,7 +8,7 @@ import ee
 import geemap
 
 # Use geemap for authentication
-geemap.ee_initialize(project='gravitasuhisteveapi-450908')
+ee.Initialize()
 
 # Now import the rest of geemap after Earth Engine is initialized
 import geemap.foliumap as geemap
