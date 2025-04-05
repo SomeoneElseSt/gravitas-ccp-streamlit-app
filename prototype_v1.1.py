@@ -2,32 +2,15 @@ import sys
 from io import StringIO
 sys.modules['StringIO'] = StringIO #applies patch to StringIO for Streamlit Deployment
 
-import ee
 import streamlit as st
 import json
+import geemap 
+
+# Use geemap for authentication
+geemap.ee_initialize(project='gravitasuhisteveapi-450908')
+
+import ee
 from google.oauth2 import service_account  # Add this import
-
-# For Streamlit Cloud deployment
-if 'gcp_service_account' in st.secrets:
-    # Convert AttrDict to regular dict
-    service_account_info = dict(st.secrets['gcp_service_account'])
-    
-    # Create credentials using google.oauth2
-    credentials = service_account.Credentials.from_service_account_info(
-        service_account_info,
-        scopes=['https://www.googleapis.com/auth/earthengine']
-    )
-    
-    # Initialize Earth Engine with the credentials
-    ee.Initialize(credentials)
-else:
-    # Fallback for local development
-    try:
-        ee.Initialize(project='gravitasuhisteveapi')
-    except Exception as e:
-        ee.Authenticate()
-        ee.Initialize(project='gravitasuhisteveapi')
-
 import geemap.foliumap as geemap
 import datetime #libraries are imported after google earth engine is initialized 
 
