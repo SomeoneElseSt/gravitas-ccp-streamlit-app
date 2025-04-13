@@ -15,3 +15,6 @@ folium
 
 # for authentication with google
 google-auth
+
+# For Gemini chatbot
+google-generativeai
