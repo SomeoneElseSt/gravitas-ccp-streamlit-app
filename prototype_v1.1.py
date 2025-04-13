@@ -292,6 +292,8 @@ st.header("Prototype Notes")
 st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
 
 
+st.header("Chatbot")
+st.write("We are now experimenting with adding a chatbot that'd have context on what the user is looking for (e.g non-technical, explain succintly, etc) and potentially a form of RAG since Gemini 2.0 Flash — we are using this model — is multimodal, so we could give it a screenshot of what the user sees and help them understand it.")
 # Set Gemini API key from Streamlit secrets
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
