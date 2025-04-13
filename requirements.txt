@@ -18,3 +18,6 @@ google-auth
 
 # For Gemini chatbot
 google-generativeai
+
+# Aider for genai import
+google-genai
