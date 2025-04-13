@@ -25,6 +25,7 @@ else:
 # Import remaining libraries after Earth Engine is initialized
 import geemap.foliumap as geemap
 import datetime
+import google.generativeai as genai
 
 
 # Create Streamlit app layout
