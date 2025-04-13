@@ -289,3 +289,51 @@ st.write("**Area of Interest (AOI)**: This is an outline of the area that will b
 
 st.header("Prototype Notes")
 st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
+
+
+# Set Gemini API key from Streamlit secrets
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
+# Set a default model
+if "gemini_model" not in st.session_state:
+    st.session_state["gemini_model"] = "gemini-2.0-flash"
+
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Initialize Gemini chat
+if "gemini_chat" not in st.session_state:
+    model = genai.GenerativeModel(st.session_state["gemini_model"])
+    st.session_state.gemini_chat = model.start_chat(history=[])
+
+# Display chat messages from history on app rerun
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Accept user input
+if prompt := st.chat_input("What is up?"):
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    # Display user message in chat message container
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Display assistant response in chat message container
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+        
+        # Send message to Gemini and stream the response
+        response = st.session_state.gemini_chat.send_message(prompt, stream=True)
+        
+        for chunk in response:
+            full_response += chunk.text
+            message_placeholder.markdown(full_response + "▌")
+        
+        message_placeholder.markdown(full_response)
+    
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
+
