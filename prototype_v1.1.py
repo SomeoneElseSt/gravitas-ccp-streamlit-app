@@ -259,15 +259,15 @@ if st.button("Process Imagery"):
         # UHI Legend
         uhi_colors = ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
         uhi_legend_dict = {
-            '>3°C Severe': uhi_colors[7],
-            '2–3°C Strong': uhi_colors[6],
-            '1–2°C Moderate': uhi_colors[5],
-            '0–1°C Slight': uhi_colors[4],
-            '±0.5°C Neutral': uhi_colors[3],
-            '–1–0°C Slight Cool': uhi_colors[2],
-            '–2– –1°C Moderate Cool': uhi_colors[1],
-            '<-2°C Strong Cool': uhi_colors[0]
-        }
+                    '> 3°C Severe': uhi_colors[7],
+                    '2 - 3°C Strong': uhi_colors[6],
+                    '1 - 2°C Moderate': uhi_colors[5],
+                    '0 - 1°C Slight': uhi_colors[4],
+                    '± 0.5°C Neutral': uhi_colors[3],
+                    '–1 - 0°C Slight Cool': uhi_colors[2],
+                    '–2 - –1°C Moderate Cool': uhi_colors[1],
+                    '< 2°C Strong Cool': uhi_colors[0]
+                }
         uhi_legend_style = {
             'right': '230px',
             'border': '1px solid gray',
