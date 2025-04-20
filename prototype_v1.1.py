@@ -32,7 +32,7 @@ import google.generativeai as genai
 st.title("Land Surface Temperature And Urban Heat Index Analysis 🌡️")
 
 # Create a map
-Map = geemap.Map()
+uhi_map = geemap.Map()
 
 # Cities with their center coordinates and appropriate bounding boxes
 cities = {
