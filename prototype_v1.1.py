@@ -252,29 +252,140 @@ if st.button("Process Imagery"):
             'palette': ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
         }
         
-        # Add layers to map
-        Map.addLayer(image, vis_params, 'True Color (432)', True, 0.7)
-        Map.addLayer(ndvi, {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}, 'Normalized Difference Vegetation Index', True, 0.7)
-        Map.addLayer(lst, lst_vis, 'Land Surface Temperature', True, 0.7)
-        Map.addLayer(uhi, uhi_vis, 'Urban Heat Index', True, 0.7)
-        Map.addLayer(utfvi, utfvi_vis, 'Urban Thermal Field Variance Index', True, 0.7)
+        # Initially only add UHI layer and AOI layer
+        uhi_map.addLayer(aoi, {}, 'Area of Interest', False)
+        uhi_map.addLayer(uhi, uhi_vis, 'Urban Heat Index', True, 0.7)
         
-        # Display LST statistics
+        # UHI Legend
+        uhi_colors = ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
+        uhi_legend_dict = {
+            '>3°C Severe': uhi_colors[7],
+            '2–3°C Strong': uhi_colors[6],
+            '1–2°C Moderate': uhi_colors[5],
+            '0–1°C Slight': uhi_colors[4],
+            '±0.5°C Neutral': uhi_colors[3],
+            '–1–0°C Slight Cool': uhi_colors[2],
+            '–2– –1°C Moderate Cool': uhi_colors[1],
+            '<-2°C Strong Cool': uhi_colors[0]
+        }
+        uhi_legend_style = {
+            'right': '230px',
+            'border': '1px solid gray',
+            'background': 'white',
+            'padding': '10px',
+            'border-radius': '5px',
+            'margin-bottom': '10px'
+        }
+        uhi_map.add_legend(title="", legend_dict=uhi_legend_dict, style=uhi_legend_style)
+        
+        # Move the layer control here, after all layers are added
+        uhi_map.add_layer_control()
+        
+        # Display the map
+        st.write("### Urban Heat Index Map")
+        st.write("This index highlights areas that are artificially hotter due to urban agglomeration, with the legend showing the relative temperature increase by color.")
+        uhi_map.to_streamlit(height=500)
+        
+        # NDVI Map
+        ndvi_map = geemap.Map()
+        ndvi_map.centerObject(aoi, 11)
+        ndvi_map.addLayer(ndvi, {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}, 'NDVI', True, 0.7)
+        ndvi_map.addLayer(aoi, {}, 'Area of Interest', False)
+        
+        # NDVI Legend
+        ndvi_legend_dict = {
+            'Built-up Areas/Bare Surfaces': 'white',
+            'Healthy/Dense Vegetation': 'green',
+            'Water Bodies': 'blue'
+        }
+
+        ndvi_legend_style = {
+            'left': '10px',
+            'border': '1px solid gray',
+            'background': 'white',
+            'padding': '10px',
+            'border-radius': '5px',
+            'margin-bottom': '10px'
+        }
+        ndvi_map.add_legend(title="", legend_dict=ndvi_legend_dict, style=ndvi_legend_style)
+        
+        ndvi_map.add_layer_control()
+        st.write("#### NDVI Map")
+        st.write("This index highlights the presence and health of vegetation in an area. Higher values (green) indicate healthier vegetation.")
+        ndvi_map.to_streamlit(height=500)
+        
+        # LST Map
+        lst_map = geemap.Map()
+        lst_map.centerObject(aoi, 11)
+        lst_map.addLayer(lst, lst_vis, 'Land Surface Temperature', True, 0.7)
+        lst_map.addLayer(aoi, {}, 'Area of Interest', False)
+        
+        # LST Legend
+        lst_colors = ['040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
+                    '0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
+                    '3be285', '3ff38f', '86e26f', '3ae237', 'b5e22e', 'd6e21f',
+                    'fff705', 'ffd611', 'ffb613', 'ff8b13', 'ff6e08', 'ff500d',
+                    'ff0000', 'de0101', 'c21301', 'a71001', '911003']
+        lst_legend_dict = {
+            '7°C - 14°C (Very Cool)': lst_colors[2],   
+            '15°C - 24°C (Cool)': lst_colors[9],       
+            '25°C - 34°C (Moderate)': lst_colors[14],  
+            '35°C - 42°C (Warm)': lst_colors[18],      
+            '43°C - 50°C (Very Hot)': lst_colors[24]   
+        }
+        lst_legend_style = {
+            'left': '230px',
+            'border': '1px solid gray',
+            'background': 'white',
+            'padding': '10px',
+            'border-radius': '5px',
+            'margin-bottom': '10px'
+        }
+        lst_map.add_legend(title="", legend_dict=lst_legend_dict, style=lst_legend_style)
+        
+        lst_map.add_layer_control()
+        st.write("#### Land Surface Temperature Map")
+        st.write("Shows the temperature of the land surface. Cooler areas are blue, warmer areas are red.")
+        lst_map.to_streamlit(height=500)
+
+         # Display LST statistics
         st.write(f"Mean LST (Land Surface Temperature) in {selected_city}: {lst_mean.getInfo():.2f}°C")
         st.write(f"Standard Deviation LST (Land Surface Temperature) in {selected_city}: {lst_std.getInfo():.2f}°C")
-
-
-
-
-
-# Draw the bounding box on the map to show the AOI
-Map.addLayer(aoi, {}, 'Area of Interest')
-
-# Move the layer control here, after all layers are added
-Map.add_layer_control()
-
-# Display the map
-Map.to_streamlit(height=600)
+        
+        # UTFVI Map
+        utfvi_map = geemap.Map()
+        utfvi_map.centerObject(aoi, 11)
+        utfvi_map.addLayer(utfvi, utfvi_vis, 'Urban Thermal Field Variance Index', True, 0.7)
+        utfvi_map.addLayer(aoi, {}, 'Area of Interest', False)
+        
+        # UTFVI Legend
+        utfvi_legend_dict = {
+            'High Heat Stress': 'b10026',       
+            'Moderate Heat Stress': 'e31a1c',   
+            'Mild Heat Stress': 'fc4e2a',       
+            'Neutral': 'fd8d3c',                
+            'Cooling Effect': 'feb24c'          
+        }
+        utfvi_legend_style = {
+            'right': '10px',
+            'border': '1px solid gray',
+            'background': 'white',
+            'padding': '10px',
+            'border-radius': '5px',
+            'margin-bottom': '10px'
+        }
+        utfvi_map.add_legend(title="", legend_dict=utfvi_legend_dict, style=utfvi_legend_style)
+        
+        utfvi_map.add_layer_control()
+        st.write("#### Urban Thermal Field Variance Index Map")
+        st.write("This index classifies urban areas by temperature comfort levels for humans, showing which city areas **feel** cooler or hotter than the city/area average.")
+        utfvi_map.to_streamlit(height=500)
+else:
+    # Create a default map with no layers when the button hasn't been clicked
+    default_map = geemap.Map()
+    default_map.centerObject(aoi, 11)
+    default_map.add_layer_control()
+    default_map.to_streamlit(height=500)
 
 st.header("How to read")
 st.write("To toggle on and off different masks, hover over the layers icon in the top right corner of the map.")
