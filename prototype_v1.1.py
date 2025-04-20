@@ -143,7 +143,7 @@ def mask_l8sr(col):
     return col.updateMask(mask)
 
 # Center map on selected city
-Map.centerObject(aoi, 11)
+uhi_map.centerObject(aoi, 11)
 
 st.write("The start and end date comprise the time range of satellite images and data used for analysis.")
 
