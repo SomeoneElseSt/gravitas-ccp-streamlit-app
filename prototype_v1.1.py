@@ -406,7 +406,7 @@ if st.button("Process Imagery") or 'processed_data' in st.session_state:
     utfvi_map.add_legend(title="", legend_dict=utfvi_legend_dict, style=utfvi_legend_style)
     utfvi_map.add_layer_control()
     st.write("#### Urban Thermal Field Variance Index Map")
-    st.write("This index classifies urban areas by temperature comfort levels for humans, showing which city areas **feel** cooler or hotter than the city/area average.")
+    st.write("This index classifies urban areas by temperature comfort levels as felt by humans, showing which city areas **feel** cooler or hotter than the city/area average.")
     utfvi_map.to_streamlit(height=500)
 else:
     # Create a default map with no layers when the button hasn't been clicked
