@@ -21,3 +21,7 @@ google-generativeai
 
 # Aider for genai import
 google-genai
+
+# Added Pillow (PIL) for image processing to Gemini 
+Pillow
+
