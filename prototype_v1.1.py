@@ -427,35 +427,102 @@ st.write("**Urban Thermal Field Variance Index (UTFVI)**: This index further int
 st.latex(r'''UTFVI = \frac {LST - LSTm} {LST}''')
 st.write("**Area of Interest (AOI)**: This is an outline of the area that will be analyzed. It is important to get the average LST of the area to calculate the UHI.")
 
-st.header("Prototype Notes")
-st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
+st.header("Blank City Spots Notes")
+st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat's 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
 
 
-st.header("Chatbot")
-st.write("We are now experimenting with adding a chatbot that'd have context on what the user needs (e.g non-technical, explain succintly, explain in Serbian, etc) and potentially have RAG since Gemini 2.0 Flash — the model we currently use — is multimodal, so we could give it a screenshot of what the user sees and help them understand it.")
+### Beguinning of Chatbot Code
+
 # Set Gemini API key from Streamlit secrets
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# Set a default model
-if "gemini_model" not in st.session_state:
-    st.session_state["gemini_model"] = "gemini-2.0-flash"
+# Function to load image for Gemini
+def load_image_for_gemini(uploaded_file):
+    if uploaded_file is not None:
+        image = Image.open(uploaded_file)
+        # Convert to RGB if necessary
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        # Create a byte stream
+        byte_stream = io.BytesIO()
+        # Save the image to the byte stream in JPEG format
+        image.save(byte_stream, format="JPEG")
+        # Get the byte value and encode as base64
+        image_bytes = base64.b64encode(byte_stream.getvalue()).decode('utf-8')
+        return image_bytes
+    return None
+
+st.header("Interactive Chatbot")
+st.write("Ask a chatbot about what each metric means and how to interpret the maps.")
+# Set Gemini API key from Streamlit secrets
+
+# Example format with dynamic building type
+st.info(f"""
+Example question format:
+        
+Analyze the thermal patterns in the captured screenshot to identify urban heat island effects and recommend optimal locations for new buildings, indicating specific streets or districts to choose or avoid, to minimize environmental impact.
+""")
 
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Initialize Gemini chat
+# Initialize Gemini chat with system prompt
 if "gemini_chat" not in st.session_state:
-    model = genai.GenerativeModel(st.session_state["gemini_model"])
-    st.session_state.gemini_chat = model.start_chat(history=[])
+    try:
+        # Use Gemini 2.0 Flash model
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        system_prompt = """
+        
+        You are an expert in urban heat analysis and building thermal patterns. 
+        For each user query, ensure they've provided:
+        1. Type of building (residential, commercial, industrial, etc.)
+        2. Area of interest in the city
+        3. Specific analysis request
+        
+        If any of these are missing, politely ask for the missing information.
+        When analyzing, consider:
+        - Land Surface Temperature (LST)
+        - Urban Heat Island (UHI) effects
+        - Urban Thermal Field Variance Index (UTFVI)
+        - Surrounding vegetation (NDVI)
+        
+        When analyzing images:
+        - Identify areas of high heat concentration
+        - Note patterns in urban heat distribution
+        - Comment on potential vegetation impacts
+        - Suggest mitigation strategies if relevant
+        
+        Provide concise, practical insights based on both the thermal analysis data and visual patterns.
+        
+        Assume the user is interested in learning more about what the graphs mean for Urban Planning Recommendations.
 
+        Also explain what each map shows (e.g. the neighboorhood in red must be avoided for new buildings because it has a high UHI, etc)
+        
+        """
+        
+        st.session_state.gemini_chat = model.start_chat(history=[])
+        # Send system prompt
+        st.session_state.gemini_chat.send_message(system_prompt)
+    except Exception as e:
+        st.error(f"Error initializing model: {str(e)}")
 # Display chat messages from history on app rerun
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# Add image upload functionality
+uploaded_image = st.file_uploader("Upload a screenshot of the map (optional)", type=['png', 'jpg', 'jpeg'])
+if uploaded_image is not None:
+    # Display the image
+    image = Image.open(uploaded_image)
+    st.image(image, caption="Uploaded Screenshot")
+    
+    # Process image for Gemini
+    st.session_state['current_image'] = load_image_for_gemini(uploaded_image)
+
 # Accept user input
-if prompt := st.chat_input("What is up?"):
+if prompt := st.chat_input("Ask a bot about the indexes or upload a map screenshot to have it explained."):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
     # Display user message in chat message container
@@ -467,14 +534,33 @@ if prompt := st.chat_input("What is up?"):
         message_placeholder = st.empty()
         full_response = ""
         
-        # Send message to Gemini and stream the response
-        response = st.session_state.gemini_chat.send_message(prompt, stream=True)
-        
-        for chunk in response:
-            full_response += chunk.text
-            message_placeholder.markdown(full_response + "▌")
-        
-        message_placeholder.markdown(full_response)
+        try:
+            # For messages with images
+            if 'current_image' in st.session_state and st.session_state['current_image'] is not None:
+                # Send both the image and the prompt
+                parts = [
+                    {"text": prompt},
+                    {
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": st.session_state['current_image']
+                        }
+                    }
+                ]
+                response = st.session_state.gemini_chat.send_message(parts)
+            else:
+                # For text-only messages
+                response = st.session_state.gemini_chat.send_message(prompt)
+            
+            for chunk in response:
+                full_response += chunk.text
+                message_placeholder.markdown(full_response + "▌")
+            
+            message_placeholder.markdown(full_response)
+        except Exception as e:
+            error_message = f"An error occurred: {str(e)}"
+            message_placeholder.markdown(error_message)
+            full_response = error_message
     
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": full_response})
