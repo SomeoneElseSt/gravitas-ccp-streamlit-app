@@ -315,7 +315,7 @@ if st.button("Process Imagery") or 'processed_data' in st.session_state:
     
     # Display the map
     st.write("### Urban Heat Index Map")
-    st.write("This index highlights areas that are artificially hotter due to urban agglomeration, with the legend showing the relative temperature increase by color.")
+    st.write("This index highlights areas that are artificially hotter due to urban agglomeration. The legend explains the relative temperature increase by color.")
     uhi_map.to_streamlit(height=500)
     
     # NDVI Map
