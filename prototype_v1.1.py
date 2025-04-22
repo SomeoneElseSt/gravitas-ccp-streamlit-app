@@ -425,7 +425,7 @@ st.latex(r'''UHI = \frac {LST - LSTm} {SD}''')
 st.write("**Urban Thermal Field Variance Index (UTFVI)**: This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself. It helps to measure the ecological feeling of different temperatures in different areas (i.e. how it feels for humans). The formula is shown below:")
 st.latex(r'''UTFVI = \frac {LST - LSTm} {LST}''')
 
-st.header("Blank City Spots Notes")
+st.header("Blank City Spots Note")
 st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat's 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
 
 
