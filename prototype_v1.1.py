@@ -422,7 +422,7 @@ st.write("**Land Surface Temperature (LST)**: Highlights the map based on the su
 st.latex(r'''LST = \frac{BT} {(1 + (λ * BT / c2) * ln(E))}''')
 st.write("**Urban Heat Index (UHI)**: This index categorizes how much hotter a point in a city is relative to the LST mean divided by the LST Standard Deviation. Red spots signal that an urban area has more concentrated heat islands relative to the LST in the rest of the AOI. This mask shows the areas that are artificially hotter due to urban agglomeration. The UHI formula is shown below:")
 st.latex(r'''UHI = \frac {LST - LSTm} {SD}''')
-st.write("**Urban Thermal Field Variance Index (UTFVI)**: This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself. The formula is shown below:")
+st.write("**Urban Thermal Field Variance Index (UTFVI)**: This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself and helps to quantify the ecological feeling of higher temperatures in different areas (i.e. percieved temperature for humans). The formula is shown below:")
 st.latex(r'''UTFVI = \frac {LST - LSTm} {LST}''')
 st.write("**Area of Interest (AOI)**: This is an outline of the area that will be analyzed. It is important to get the average LST of the area to calculate the UHI.")
 
