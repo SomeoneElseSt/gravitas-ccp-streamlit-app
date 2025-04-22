@@ -6,6 +6,9 @@ import ee
 import streamlit as st
 import json
 from google.oauth2 import service_account
+from PIL import Image
+import base64
+import io 
 
 # Earth Engine initialization with service account
 if 'gcp_service_account' in st.secrets:
