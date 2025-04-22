@@ -416,7 +416,6 @@ else:
     default_map.to_streamlit(height=500)
 
 st.header("How to read")
-st.write("To toggle on and off different masks, hover over the layers icon in the top right corner of the map.")
 st.write("**Normalized Difference Vegetation Index (NDVI)**: This index highlights the presence and health of vegetation in an area. It is calculated using the reflectance values from the near-infrared (NIR) and red bands of satellite imagery. Healthy vegetation reflects more NIR and absorbs more red light, resulting in a higher NDVI value. The NDVI formula is shown below:")
 st.latex(r'''NDVI = \frac{NIR - Red}{NIR + Red}''')
 st.write("**Land Surface Temperature (LST)**: Highlights the map based on the surface temperature of each point using a red-blue scale. The bluer the area, the lesser its temperature, and vice versa with red areas. It is calculated accounting for brightness temperature, emitted radiance, and land surface emissivity. The LST formula is shown below:")
