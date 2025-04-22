@@ -151,238 +151,263 @@ uhi_map.centerObject(aoi, 11)
 st.write("The start and end date comprise the time range of satellite images and data used for analysis.")
 
 # Process imagery when user clicks the button
-if st.button("Process Imagery"):
-    with st.spinner(f"Processing imagery for {selected_city}... This may take a moment."):
-        # Filter the collection using string dates
-        image = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2') \
-            .filterDate(ee_start_date, ee_end_date) \
-            .filterBounds(aoi) \
-            .map(apply_scale_factors) \
-            .map(mask_l8sr) \
-            .median()
+if st.button("Process Imagery") or 'processed_data' in st.session_state:
+    
+    # Only compute anew if the city, start date, or end date has changed
+    compute_new = False
+    
+    # Check if new data needs to be computed
+    if 'processed_data' not in st.session_state:
+        compute_new = True
+    elif st.session_state.processed_data.get('city') != selected_city:
+        compute_new = True
+    elif st.session_state.processed_data.get('start_date') != ee_start_date:
+        compute_new = True
+    elif st.session_state.processed_data.get('end_date') != ee_end_date:
+        compute_new = True
+    
+    # Compute new data if needed
+    if compute_new:
+        with st.spinner(f"Processing imagery for {selected_city}... This may take a moment."):
+            # Filter the collection using string dates
+            image = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2') \
+                .filterDate(ee_start_date, ee_end_date) \
+                .filterBounds(aoi) \
+                .map(apply_scale_factors) \
+                .map(mask_l8sr) \
+                .median()
 
-        # True color visualization
-        vis_params = {
-            'bands': ['SR_B4', 'SR_B3', 'SR_B2'],
-            'min': 0.0,
-            'max': 0.3,
-        }
-        
-        ## NDVI - Normalized Difference Vegetation Index,  NDVI = (NIR - Red) / (NIR + Red)
-        # Helps identify vegetation, higher NDVI values indicate dense vegetation
-        ndvi = image.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI')
-        
-        # Calculate NDVI min and max for normalization
-        ndvi_min = ee.Number(ndvi.reduceRegion(
-            reducer=ee.Reducer.min(),
-            geometry=aoi,
-            scale=30,
-            maxPixels=1e9
-        ).values().get(0))
-
-        ndvi_max = ee.Number(ndvi.reduceRegion(
-            reducer=ee.Reducer.max(),
-            geometry=aoi,
-            scale=30,
-            maxPixels=1e9
-        ).values().get(0))
-
-        # FV - Fraction of Vegetation, FV = ((NDVI - NDVI_min) / (NDVI_max - NDVI_min))^2
-        # Represents the proportion of vegetation in a pixel.
-        fv = ndvi.subtract(ndvi_min).divide(ndvi_max.subtract(ndvi_min)).pow(ee.Number(2)).rename('FV')
-        
-        # EM - Emissivity, EM = 0.004 * FV + 0.986
-        # Accounts for the emissivity of land surface, necessary for LST calculations.
-        em = fv.multiply(ee.Number(0.004)).add(ee.Number(0.986)).rename('EM')
-        
-        # Selecting thermal band for brightness temperature calculation
-        thermal = image.select('ST_B10').rename('thermal')
-        
-        # LST - Land Surface Temperature, LST = BT / (1 + ((λ * BT / c2) * ln(EM))) - 273.15
-        # Corrects top-of-atmosphere brightness temperature to land surface temperature.
-        lst = thermal.expression(
-            '(tb / (1 + ((11.5 * (tb / 14380)) * log(em)))) - 273.15',
-            {
-                'tb': thermal.select('thermal'),# Brightness temperature
-                'em': em # Land surface emissivity
+            # True color visualization
+            vis_params = {
+                'bands': ['SR_B4', 'SR_B3', 'SR_B2'],
+                'min': 0.0,
+                'max': 0.3,
             }
-        ).rename('LST')
-        
-        lst_vis = {
-            'min': 7,
-            'max': 50,
-            'palette': [
-                '040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
-                '0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
-                '3be285', '3ff38f', '86e26f', '3ae237', 'b5e22e', 'd6e21f',
-                'fff705', 'ffd611', 'ffb613', 'ff8b13', 'ff6e08', 'ff500d',
-                'ff0000', 'de0101', 'c21301', 'a71001', '911003'
-            ]
-        }
-        
-        # Mean and Standard Deviation of LST
-        lst_mean = ee.Number(lst.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=aoi,
-            scale=30,
-            maxPixels=1e9
-        ).values().get(0))
+            
+            ## NDVI calculation
+            ndvi = image.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI')
+            
+            # Calculate NDVI min and max for normalization
+            ndvi_min = ee.Number(ndvi.reduceRegion(
+                reducer=ee.Reducer.min(),
+                geometry=aoi,
+                scale=30,
+                maxPixels=1e9
+            ).values().get(0))
 
-        lst_std = ee.Number(lst.reduceRegion(
-            reducer=ee.Reducer.stdDev(),
-            geometry=aoi,
-            scale=30,
-            maxPixels=1e9
-        ).values().get(0))
-        
-        # UHI - Urban Heat Island,  UHI = (LST - LST_mean) / LST_std
-        # Standardizes LST variations to highlight urban heat islands.
-        uhi = lst.subtract(lst_mean).divide(lst_std).rename('UHI')
-        uhi_vis = {
-            'min': -4,
-            'max': 4,
-            'palette': ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
-        }
-        
-        
-        # UTFVI - Urban Thermal Field Variance Index, UTFVI = (LST - LST_mean) / LST
-        # Intensifies the UHI effect by quantifying the variation in LST across urban areas.
-        utfvi = lst.subtract(lst_mean).divide(lst).rename('UTFVI')
-        
-        utfvi_vis = {
-            'min': -1,
-            'max': 0.3,
-            'palette': ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
-        }
-        
-        # Initially only add UHI layer and AOI layer
-        uhi_map.addLayer(aoi, {}, 'Area of Interest', False)
-        uhi_map.addLayer(uhi, uhi_vis, 'Urban Heat Index', True, 0.7)
-        
-        # UHI Legend
-        uhi_colors = ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
-        uhi_legend_dict = {
-                    '> 3°C Severe': uhi_colors[7],
-                    '2 - 3°C Strong': uhi_colors[6],
-                    '1 - 2°C Moderate': uhi_colors[5],
-                    '0 - 1°C Slight': uhi_colors[4],
-                    '± 0.5°C Neutral': uhi_colors[3],
-                    '–1 - 0°C Slight Cool': uhi_colors[2],
-                    '–2 - –1°C Moderate Cool': uhi_colors[1],
-                    '< 2°C Strong Cool': uhi_colors[0]
+            ndvi_max = ee.Number(ndvi.reduceRegion(
+                reducer=ee.Reducer.max(),
+                geometry=aoi,
+                scale=30,
+                maxPixels=1e9
+            ).values().get(0))
+
+            # FV calculation 
+            fv = ndvi.subtract(ndvi_min).divide(ndvi_max.subtract(ndvi_min)).pow(ee.Number(2)).rename('FV')
+            
+            # EM calculation
+            em = fv.multiply(ee.Number(0.004)).add(ee.Number(0.986)).rename('EM')
+            
+            # Thermal band selection
+            thermal = image.select('ST_B10').rename('thermal')
+            
+            # LST calculation
+            lst = thermal.expression(
+                '(tb / (1 + ((11.5 * (tb / 14380)) * log(em)))) - 273.15',
+                {
+                    'tb': thermal.select('thermal'),
+                    'em': em
                 }
-        uhi_legend_style = {
-            'right': '230px',
-            'border': '1px solid gray',
-            'background': 'white',
-            'padding': '10px',
-            'border-radius': '5px',
-            'margin-bottom': '10px'
-        }
-        uhi_map.add_legend(title="", legend_dict=uhi_legend_dict, style=uhi_legend_style)
-        
-        # Move the layer control here, after all layers are added
-        uhi_map.add_layer_control()
-        
-        # Display the map
-        st.write("### Urban Heat Index Map")
-        st.write("This index highlights areas that are artificially hotter due to urban agglomeration, with the legend showing the relative temperature increase by color.")
-        uhi_map.to_streamlit(height=500)
-        
-        # NDVI Map
-        ndvi_map = geemap.Map()
-        ndvi_map.centerObject(aoi, 11)
-        ndvi_map.addLayer(ndvi, {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']}, 'NDVI', True, 0.7)
-        ndvi_map.addLayer(aoi, {}, 'Area of Interest', False)
-        
-        # NDVI Legend
-        ndvi_legend_dict = {
-            'Built-up Areas/Bare Surfaces': 'white',
-            'Healthy/Dense Vegetation': 'green',
-            'Water Bodies': 'blue'
-        }
-
-        ndvi_legend_style = {
-            'left': '10px',
-            'border': '1px solid gray',
-            'background': 'white',
-            'padding': '10px',
-            'border-radius': '5px',
-            'margin-bottom': '10px'
-        }
-        ndvi_map.add_legend(title="", legend_dict=ndvi_legend_dict, style=ndvi_legend_style)
-        
-        ndvi_map.add_layer_control()
-        st.write("#### NDVI Map")
-        st.write("This index highlights the presence and health of vegetation in an area. Higher values (green) indicate healthier vegetation.")
-        ndvi_map.to_streamlit(height=500)
-        
-        # LST Map
-        lst_map = geemap.Map()
-        lst_map.centerObject(aoi, 11)
-        lst_map.addLayer(lst, lst_vis, 'Land Surface Temperature', True, 0.7)
-        lst_map.addLayer(aoi, {}, 'Area of Interest', False)
-        
-        # LST Legend
-        lst_colors = ['040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
+            ).rename('LST')
+            
+            lst_vis = {
+                'min': 7,
+                'max': 50,
+                'palette': [
+                    '040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
                     '0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
                     '3be285', '3ff38f', '86e26f', '3ae237', 'b5e22e', 'd6e21f',
                     'fff705', 'ffd611', 'ffb613', 'ff8b13', 'ff6e08', 'ff500d',
-                    'ff0000', 'de0101', 'c21301', 'a71001', '911003']
-        lst_legend_dict = {
-            '7°C - 14°C (Very Cool)': lst_colors[2],   
-            '15°C - 24°C (Cool)': lst_colors[9],       
-            '25°C - 34°C (Moderate)': lst_colors[14],  
-            '35°C - 42°C (Warm)': lst_colors[18],      
-            '43°C - 50°C (Very Hot)': lst_colors[24]   
-        }
-        lst_legend_style = {
-            'left': '230px',
-            'border': '1px solid gray',
-            'background': 'white',
-            'padding': '10px',
-            'border-radius': '5px',
-            'margin-bottom': '10px'
-        }
-        lst_map.add_legend(title="", legend_dict=lst_legend_dict, style=lst_legend_style)
-        
-        lst_map.add_layer_control()
-        st.write("#### Land Surface Temperature Map")
-        st.write("Shows the temperature of the land surface. Cooler areas are blue, warmer areas are red.")
-        lst_map.to_streamlit(height=500)
+                    'ff0000', 'de0101', 'c21301', 'a71001', '911003'
+                ]
+            }
+            
+            # Mean and Standard Deviation of LST
+            lst_mean = ee.Number(lst.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=aoi,
+                scale=30,
+                maxPixels=1e9
+            ).values().get(0))
 
-         # Display LST statistics
-        st.write(f"Mean LST (Land Surface Temperature) in {selected_city}: {lst_mean.getInfo():.2f}°C")
-        st.write(f"Standard Deviation LST (Land Surface Temperature) in {selected_city}: {lst_std.getInfo():.2f}°C")
-        
-        # UTFVI Map
-        utfvi_map = geemap.Map()
-        utfvi_map.centerObject(aoi, 11)
-        utfvi_map.addLayer(utfvi, utfvi_vis, 'Urban Thermal Field Variance Index', True, 0.7)
-        utfvi_map.addLayer(aoi, {}, 'Area of Interest', False)
-        
-        # UTFVI Legend
-        utfvi_legend_dict = {
-            'High Heat Stress': 'b10026',       
-            'Moderate Heat Stress': 'e31a1c',   
-            'Mild Heat Stress': 'fc4e2a',       
-            'Neutral': 'fd8d3c',                
-            'Cooling Effect': 'feb24c'          
-        }
-        utfvi_legend_style = {
-            'right': '10px',
-            'border': '1px solid gray',
-            'background': 'white',
-            'padding': '10px',
-            'border-radius': '5px',
-            'margin-bottom': '10px'
-        }
-        utfvi_map.add_legend(title="", legend_dict=utfvi_legend_dict, style=utfvi_legend_style)
-        
-        utfvi_map.add_layer_control()
-        st.write("#### Urban Thermal Field Variance Index Map")
-        st.write("This index classifies urban areas by temperature comfort levels for humans, showing which city areas **feel** cooler or hotter than the city/area average.")
-        utfvi_map.to_streamlit(height=500)
+            lst_std = ee.Number(lst.reduceRegion(
+                reducer=ee.Reducer.stdDev(),
+                geometry=aoi,
+                scale=30,
+                maxPixels=1e9
+            ).values().get(0))
+            
+            # UHI calculation
+            uhi = lst.subtract(lst_mean).divide(lst_std).rename('UHI')
+            uhi_vis = {
+                'min': -4,
+                'max': 4,
+                'palette': ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
+            }
+            
+            # UTFVI calculation
+            utfvi = lst.subtract(lst_mean).divide(lst).rename('UTFVI')
+            
+            utfvi_vis = {
+                'min': -1,
+                'max': 0.3,
+                'palette': ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
+            }
+            
+            # Store results in session state
+            st.session_state.processed_data = {
+                'city': selected_city,
+                'start_date': ee_start_date,
+                'end_date': ee_end_date,
+                'ndvi': ndvi,
+                'lst': lst,
+                'lst_mean': lst_mean.getInfo(),
+                'lst_std': lst_std.getInfo(),
+                'uhi': uhi,
+                'utfvi': utfvi,
+                'ndvi_vis': {'min': -1, 'max': 1, 'palette': ['blue', 'white', 'green']},
+                'lst_vis': lst_vis,
+                'uhi_vis': uhi_vis,
+                'utfvi_vis': utfvi_vis
+            }
+    
+    # Use data from session state (whether just computed or from previous computation)
+    data = st.session_state.processed_data
+    
+    # UHI Map
+    uhi_map = geemap.Map()
+    uhi_map.centerObject(aoi, 11)
+    uhi_map.addLayer(aoi, {}, 'Area of Interest', False)
+    uhi_map.addLayer(data['uhi'], data['uhi_vis'], 'Urban Heat Index', True, 0.7)
+    
+    # UHI Legend
+    uhi_colors = ['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c', 'b10026']
+    uhi_legend_dict = {
+                '> 3°C Severe': uhi_colors[7],
+                '2 - 3°C Strong': uhi_colors[6],
+                '1 - 2°C Moderate': uhi_colors[5],
+                '0 - 1°C Slight': uhi_colors[4],
+                '± 0.5°C Neutral': uhi_colors[3],
+                '–1 - 0°C Slight Cool': uhi_colors[2],
+                '–2 - –1°C Moderate Cool': uhi_colors[1],
+                '< 2°C Strong Cool': uhi_colors[0]
+            }
+    uhi_legend_style = {
+        'right': '230px',
+        'border': '1px solid gray',
+        'background': 'white',
+        'padding': '10px',
+        'border-radius': '5px',
+        'margin-bottom': '10px'
+    }
+    uhi_map.add_legend(title="", legend_dict=uhi_legend_dict, style=uhi_legend_style)
+    uhi_map.add_layer_control()
+    
+    # Display the map
+    st.write("### Urban Heat Index Map")
+    st.write("This index highlights areas that are artificially hotter due to urban agglomeration, with the legend showing the relative temperature increase by color.")
+    uhi_map.to_streamlit(height=500)
+    
+    # NDVI Map
+    ndvi_map = geemap.Map()
+    ndvi_map.centerObject(aoi, 11)
+    ndvi_map.addLayer(data['ndvi'], data['ndvi_vis'], 'NDVI', True, 0.7)
+    ndvi_map.addLayer(aoi, {}, 'Area of Interest', False)
+    
+    # NDVI Legend
+    ndvi_legend_dict = {
+        'Built-up Areas/Bare Surfaces': 'white',
+        'Healthy/Dense Vegetation': 'green',
+        'Water Bodies': 'blue'
+    }
+    ndvi_legend_style = {
+        'left': '10px',
+        'border': '1px solid gray',
+        'background': 'white',
+        'padding': '10px',
+        'border-radius': '5px',
+        'margin-bottom': '10px'
+    }
+    ndvi_map.add_legend(title="", legend_dict=ndvi_legend_dict, style=ndvi_legend_style)
+    ndvi_map.add_layer_control()
+    st.write("#### NDVI Map")
+    st.write("This index highlights the presence and health of vegetation in an area. Higher values (green) indicate healthier vegetation.")
+    ndvi_map.to_streamlit(height=500)
+    
+    # LST Map
+    lst_map = geemap.Map()
+    lst_map.centerObject(aoi, 11)
+    lst_map.addLayer(data['lst'], data['lst_vis'], 'Land Surface Temperature', True, 0.7)
+    lst_map.addLayer(aoi, {}, 'Area of Interest', False)
+    
+    # LST Legend
+    lst_colors = ['040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
+                '0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
+                '3be285', '3ff38f', '86e26f', '3ae237', 'b5e22e', 'd6e21f',
+                'fff705', 'ffd611', 'ffb613', 'ff8b13', 'ff6e08', 'ff500d',
+                'ff0000', 'de0101', 'c21301', 'a71001', '911003']
+    lst_legend_dict = {
+        '7°C - 14°C (Very Cool)': lst_colors[2],   
+        '15°C - 24°C (Cool)': lst_colors[9],       
+        '25°C - 34°C (Moderate)': lst_colors[14],  
+        '35°C - 42°C (Warm)': lst_colors[18],      
+        '43°C - 50°C (Very Hot)': lst_colors[24]   
+    }
+    lst_legend_style = {
+        'left': '230px',
+        'border': '1px solid gray',
+        'background': 'white',
+        'padding': '10px',
+        'border-radius': '5px',
+        'margin-bottom': '10px'
+    }
+    lst_map.add_legend(title="", legend_dict=lst_legend_dict, style=lst_legend_style)
+    lst_map.add_layer_control()
+    st.write("#### Land Surface Temperature Map")
+    st.write("Shows the temperature of the land surface. Cooler areas are blue, warmer areas are red.")
+    lst_map.to_streamlit(height=500)
+
+    # Display LST statistics
+    st.write(f"Mean LST (Land Surface Temperature) in {selected_city}: {data['lst_mean']:.2f}°C")
+    st.write(f"Standard Deviation LST (Land Surface Temperature) in {selected_city}: {data['lst_std']:.2f}°C")
+    
+    # UTFVI Map
+    utfvi_map = geemap.Map()
+    utfvi_map.centerObject(aoi, 11)
+    utfvi_map.addLayer(data['utfvi'], data['utfvi_vis'], 'Urban Thermal Field Variance Index', True, 0.7)
+    utfvi_map.addLayer(aoi, {}, 'Area of Interest', False)
+    
+    # UTFVI Legend
+    utfvi_legend_dict = {
+        'High Heat Stress': 'b10026',       
+        'Moderate Heat Stress': 'e31a1c',   
+        'Mild Heat Stress': 'fc4e2a',       
+        'Neutral': 'fd8d3c',                
+        'Cooling Effect': 'feb24c'          
+    }
+    utfvi_legend_style = {
+        'right': '10px',
+        'border': '1px solid gray',
+        'background': 'white',
+        'padding': '10px',
+        'border-radius': '5px',
+        'margin-bottom': '10px'
+    }
+    utfvi_map.add_legend(title="", legend_dict=utfvi_legend_dict, style=utfvi_legend_style)
+    utfvi_map.add_layer_control()
+    st.write("#### Urban Thermal Field Variance Index Map")
+    st.write("This index classifies urban areas by temperature comfort levels for humans, showing which city areas **feel** cooler or hotter than the city/area average.")
+    utfvi_map.to_streamlit(height=500)
 else:
     # Create a default map with no layers when the button hasn't been clicked
     default_map = geemap.Map()
