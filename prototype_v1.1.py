@@ -426,7 +426,7 @@ st.write("**Urban Thermal Field Variance Index (UTFVI)**: This index further int
 st.latex(r'''UTFVI = \frac {LST - LSTm} {LST}''')
 
 st.subheader("Blank City Spots Note")
-st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat's 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
+st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
 
 
 ### Beguinning of Chatbot Code
