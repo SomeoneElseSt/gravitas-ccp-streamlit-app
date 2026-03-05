@@ -428,6 +428,10 @@ utfvi_explanation = "This index further intensifies the UHI effect by quantifyin
 
 st.header("How to read")
 
+with st.expander("Urban Heat Index (UHI)"):
+    st.write(uhi_explanation)
+    st.latex(r'''UHI = \frac {LST - LSTm} {SD}''')
+
 with st.expander("Normalized Difference Vegetation Index (NDVI)"):
     st.write(ndvi_explanation)
     st.latex(r'''NDVI = \frac{NIR - Red}{NIR + Red}''')
@@ -435,10 +439,6 @@ with st.expander("Normalized Difference Vegetation Index (NDVI)"):
 with st.expander("Land Surface Temperature (LST)"):
     st.write(lst_explanation)
     st.latex(r'''LST = \frac{BT} {(1 + (λ * BT / c2) * ln(E))}''')
-
-with st.expander("Urban Heat Index (UHI)"):
-    st.write(uhi_explanation)
-    st.latex(r'''UHI = \frac {LST - LSTm} {SD}''')
 
 with st.expander("Urban Thermal Field Variance Index (UTFVI)"):
     st.write(utfvi_explanation)
