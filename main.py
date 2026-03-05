@@ -130,6 +130,9 @@ with col1:
 with col2:
     end_date = st.date_input("End date", value=datetime.date(2022, 12, 31))
 
+if end_date <= start_date:
+    st.error("End date must be after start date. Please adjust your date range.")
+
 # Convert to strings when using with Earth Engine
 ee_start_date = start_date.strftime("%Y-%m-%d")
 ee_end_date = end_date.strftime("%Y-%m-%d")
