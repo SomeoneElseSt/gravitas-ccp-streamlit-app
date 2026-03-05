@@ -17,10 +17,7 @@ geemap
 # for authentication with google
 google-auth
 
-# For Gemini chatbot
-google-generativeai
-
-# Aider for genai import
+# Gemini SDK
 google-genai
 
 # Added Pillow (PIL) for image processing to Gemini 
