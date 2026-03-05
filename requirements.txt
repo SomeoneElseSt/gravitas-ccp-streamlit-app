@@ -12,8 +12,10 @@ folium
 
 
 # only import geemap, do not import ee. ee is default in geemap
-# geemap >= 0.27.0 uses xyzservices.TileProvider directly (no longer needs xyz_to_folium)
-geemap>=0.27.0
+# Install from git master: v0.37.1 has a bug where basemaps variable shadows the module import,
+# causing "Box has no attribute xyz_to_folium" on Streamlit re-execution.
+# Master fixed this with `from .basemaps import xyz_to_folium` instead of `from . import basemaps`.
+geemap @ git+https://github.com/gee-community/geemap.git
 
 # for authentication with google
 google-auth
@@ -27,5 +29,4 @@ google-genai
 # Added Pillow (PIL) for image processing to Gemini 
 Pillow
 
-xyzservices==2024.6.0
 
