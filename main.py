@@ -130,10 +130,6 @@ with col1:
 with col2:
     end_date = st.date_input("End date", value=datetime.date(2022, 12, 31))
 
-invalid_dates = end_date <= start_date
-if invalid_dates:
-    st.error("End date must be after start date. Please adjust your date range.")
-
 # Convert to strings when using with Earth Engine
 ee_start_date = start_date.strftime("%Y-%m-%d")
 ee_end_date = end_date.strftime("%Y-%m-%d")
@@ -159,6 +155,10 @@ def mask_l8sr(col):
 uhi_map.centerObject(aoi, 11)
 
 st.write("The start and end date comprise the time range of satellite images and data used for analysis.")
+
+invalid_dates = end_date <= start_date
+if invalid_dates:
+    st.error("End date must be after start date. Please adjust your date range.")
 
 ndvi_explanation = "This index highlights the presence and health of vegetation in an area. It is calculated using the reflectance values from the near-infrared (NIR) and red bands of satellite imagery. Healthy vegetation reflects more NIR and absorbs more red light, resulting in a higher NDVI value. Formula: NDVI = (NIR - Red) / (NIR + Red)"
 lst_explanation = "Highlights the map based on the surface temperature of each point using a red-blue scale. The bluer the area, the lesser its temperature, and vice versa with red areas. It is calculated accounting for brightness temperature, emitted radiance, and land surface emissivity. Formula: LST = BT / (1 + (λ * BT / c2) * ln(E))"
