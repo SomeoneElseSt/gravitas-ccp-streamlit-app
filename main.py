@@ -517,7 +517,11 @@ for message in st.session_state.messages:
 
 # Auto-analyze all maps button
 if 'processed_data' in st.session_state:
-    if st.button("Analyze All Maps with AI 🔍"):
+    with st.container(border=True):
+        st.markdown("##### 🛰️ AI Map Analysis")
+        st.caption("Fetches all 4 map layers directly from Earth Engine and sends them to the AI for a full urban heat breakdown.")
+        analyze_clicked = st.button("Analyze All Maps", type="primary", use_container_width=True)
+    if analyze_clicked:
         data = st.session_state.processed_data
         thumb_params = {'region': aoi, 'dimensions': 512, 'format': 'png'}
 
