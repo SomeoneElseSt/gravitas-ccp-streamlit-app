@@ -503,7 +503,7 @@ if "gemini_client" not in st.session_state:
 if "gemini_chat" not in st.session_state:
     try:
         st.session_state.gemini_chat = st.session_state.gemini_client.chats.create(
-            model="gemini-3.0-flash", # Most recent Gemini model as of March, 2026
+            model="gemini-3.0-flash-preview", # Most recent Gemini model as of March, 2026
             config=types.GenerateContentConfig(system_instruction=system_prompt),
         )
     except Exception as e:
