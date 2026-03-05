@@ -421,25 +421,30 @@ else:
     default_map.add_layer_control()
     default_map.to_streamlit(height=500)
 
+ndvi_explanation = "This index highlights the presence and health of vegetation in an area. It is calculated using the reflectance values from the near-infrared (NIR) and red bands of satellite imagery. Healthy vegetation reflects more NIR and absorbs more red light, resulting in a higher NDVI value. Formula: NDVI = (NIR - Red) / (NIR + Red)"
+lst_explanation = "Highlights the map based on the surface temperature of each point using a red-blue scale. The bluer the area, the lesser its temperature, and vice versa with red areas. It is calculated accounting for brightness temperature, emitted radiance, and land surface emissivity. Formula: LST = BT / (1 + (λ * BT / c2) * ln(E))"
+uhi_explanation = "This index categorizes how much hotter a point in a city is relative to the LST mean divided by the LST Standard Deviation. Red spots signal that an urban area has more concentrated heat islands relative to the LST in the rest of the AOI. This mask shows the areas that are artificially hotter due to urban agglomeration. Formula: UHI = (LST - LSTm) / SD"
+utfvi_explanation = "This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself. It helps to measure the ecological feeling of different temperatures in different areas (i.e. how it feels for humans). Formula: UTFVI = (LST - LSTm) / LST"
+
 st.header("How to read")
 
 with st.expander("Normalized Difference Vegetation Index (NDVI)"):
-    st.write("This index highlights the presence and health of vegetation in an area. It is calculated using the reflectance values from the near-infrared (NIR) and red bands of satellite imagery. Healthy vegetation reflects more NIR and absorbs more red light, resulting in a higher NDVI value. The NDVI formula is shown below:")
+    st.write(ndvi_explanation)
     st.latex(r'''NDVI = \frac{NIR - Red}{NIR + Red}''')
 
 with st.expander("Land Surface Temperature (LST)"):
-    st.write("Highlights the map based on the surface temperature of each point using a red-blue scale. The bluer the area, the lesser its temperature, and vice versa with red areas. It is calculated accounting for brightness temperature, emitted radiance, and land surface emissivity. The LST formula is shown below:")
+    st.write(lst_explanation)
     st.latex(r'''LST = \frac{BT} {(1 + (λ * BT / c2) * ln(E))}''')
 
 with st.expander("Urban Heat Index (UHI)"):
-    st.write("This index categorizes how much hotter a point in a city is relative to the LST mean divided by the LST Standard Deviation. Red spots signal that an urban area has more concentrated heat islands relative to the LST in the rest of the AOI. This mask shows the areas that are artificially hotter due to urban agglomeration. The UHI formula is shown below:")
+    st.write(uhi_explanation)
     st.latex(r'''UHI = \frac {LST - LSTm} {SD}''')
 
 with st.expander("Urban Thermal Field Variance Index (UTFVI)"):
-    st.write("This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself. It helps to measure the ecological feeling of different temperatures in different areas (i.e. how it feels for humans). The formula is shown below:")
+    st.write(utfvi_explanation)
     st.latex(r'''UTFVI = \frac {LST - LSTm} {LST}''')
 
-st.subheader("Blank City Spots Note")
+st.subheader("Note: Blank City Spots")
 st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
 
 
@@ -484,33 +489,40 @@ if "gemini_chat" not in st.session_state:
     try:
         # Use Gemini 2.0 Flash model
         model = genai.GenerativeModel('gemini-2.0-flash')
-        system_prompt = """
-        
-        You are an expert in urban heat analysis and building thermal patterns. 
+        system_prompt = f"""
+
+        You are an expert in urban heat analysis and building thermal patterns.
+
+        Here are the definitions of the indices shown in the app:
+        - NDVI: {ndvi_explanation}
+        - LST: {lst_explanation}
+        - UHI: {uhi_explanation}
+        - UTFVI: {utfvi_explanation}
+
         For each user query, ensure they've provided:
         1. Type of building (residential, commercial, industrial, etc.)
         2. Area of interest in the city
         3. Specific analysis request
-        
+
         If any of these are missing, politely ask for the missing information.
         When analyzing, consider:
         - Land Surface Temperature (LST)
         - Urban Heat Island (UHI) effects
         - Urban Thermal Field Variance Index (UTFVI)
         - Surrounding vegetation (NDVI)
-        
+
         When analyzing images:
         - Identify areas of high heat concentration
         - Note patterns in urban heat distribution
         - Comment on potential vegetation impacts
         - Suggest mitigation strategies if relevant
-        
+
         Provide concise, practical insights based on both the thermal analysis data and visual patterns.
-        
+
         Assume the user is interested in learning more about what the graphs mean for Urban Planning Recommendations.
 
         Also explain what each map shows (e.g. the neighboorhood in red must be avoided for new buildings because it has a high UHI, etc)
-        
+
         """
         
         st.session_state.gemini_chat = model.start_chat(history=[])
