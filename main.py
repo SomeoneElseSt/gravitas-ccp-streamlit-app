@@ -162,21 +162,24 @@ uhi_explanation = "This index categorizes how much hotter a point in a city is r
 utfvi_explanation = "This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself. It helps to measure the ecological feeling of different temperatures in different areas (i.e. how it feels for humans). Formula: UTFVI = (LST - LSTm) / LST"
 
 # Process imagery when user clicks the button
-if st.button("Process Imagery") or 'processed_data' in st.session_state:
-    
-    # Only compute anew if the city, start date, or end date has changed
+button_pressed = st.button("Process Imagery")
+if button_pressed or 'processed_data' in st.session_state:
+
+    # Only recompute when the button is explicitly pressed and parameters changed
     compute_new = False
-    
-    # Check if new data needs to be computed
-    if 'processed_data' not in st.session_state:
-        compute_new = True
-    elif st.session_state.processed_data.get('city') != selected_city:
-        compute_new = True
-    elif st.session_state.processed_data.get('start_date') != ee_start_date:
-        compute_new = True
-    elif st.session_state.processed_data.get('end_date') != ee_end_date:
-        compute_new = True
-    
+
+    if button_pressed:
+        if end_date <= start_date:
+            st.error("End date must be after start date. Please adjust your date range.")
+        elif 'processed_data' not in st.session_state:
+            compute_new = True
+        elif st.session_state.processed_data.get('city') != selected_city:
+            compute_new = True
+        elif st.session_state.processed_data.get('start_date') != ee_start_date:
+            compute_new = True
+        elif st.session_state.processed_data.get('end_date') != ee_end_date:
+            compute_new = True
+
     # Compute new data if needed
     if compute_new:
         with st.spinner(f"Processing imagery for {selected_city}... This may take a moment."):
