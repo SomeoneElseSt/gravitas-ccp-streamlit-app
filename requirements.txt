@@ -27,3 +27,5 @@ google-genai
 # Added Pillow (PIL) for image processing to Gemini 
 Pillow
 
+xyzservices==2024.6.0
+
