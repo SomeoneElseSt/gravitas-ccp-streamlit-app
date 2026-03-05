@@ -130,7 +130,8 @@ with col1:
 with col2:
     end_date = st.date_input("End date", value=datetime.date(2022, 12, 31))
 
-if end_date <= start_date:
+invalid_dates = end_date <= start_date
+if invalid_dates:
     st.error("End date must be after start date. Please adjust your date range.")
 
 # Convert to strings when using with Earth Engine
@@ -165,16 +166,14 @@ uhi_explanation = "This index categorizes how much hotter a point in a city is r
 utfvi_explanation = "This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself. It helps to measure the ecological feeling of different temperatures in different areas (i.e. how it feels for humans). Formula: UTFVI = (LST - LSTm) / LST"
 
 # Process imagery when user clicks the button
-button_pressed = st.button("Process Imagery")
+button_pressed = st.button("Process Imagery", disabled=invalid_dates)
 if button_pressed or 'processed_data' in st.session_state:
 
     # Only recompute when the button is explicitly pressed and parameters changed
     compute_new = False
 
     if button_pressed:
-        if end_date <= start_date:
-            st.error("End date must be after start date. Please adjust your date range.")
-        elif 'processed_data' not in st.session_state:
+        if 'processed_data' not in st.session_state:
             compute_new = True
         elif st.session_state.processed_data.get('city') != selected_city:
             compute_new = True
