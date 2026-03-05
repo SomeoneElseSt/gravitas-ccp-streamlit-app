@@ -482,8 +482,6 @@ Structure your response clearly with sections. Be specific — reference colors,
 Assume the user is interested in Urban Planning Recommendations and making sense of what the data means for real decisions.
 """
 
-gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-
 st.header("Interactive Chatbot")
 st.write("Ask a chatbot about what each metric means and how to interpret the maps.")
 
@@ -496,9 +494,15 @@ Analyze the thermal patterns in the captured screenshot to identify urban heat i
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Store client in session state so it stays alive alongside the chat session.
+# Creating it at module level causes it to be recreated on every Streamlit rerun,
+# which closes the previous instance and breaks any chat tied to it.
+if "gemini_client" not in st.session_state:
+    st.session_state.gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+
 if "gemini_chat" not in st.session_state:
     try:
-        st.session_state.gemini_chat = gemini_client.chats.create(
+        st.session_state.gemini_chat = st.session_state.gemini_client.chats.create(
             model="gemini-2.5-flash",
             config=types.GenerateContentConfig(system_instruction=system_prompt),
         )
@@ -510,14 +514,6 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Image upload
-uploaded_image = st.file_uploader("Upload a screenshot of the map (optional)", type=['png', 'jpg', 'jpeg'])
-if uploaded_image is not None:
-    image = Image.open(uploaded_image)
-    st.image(image, caption="Uploaded Screenshot")
-    byte_stream = io.BytesIO()
-    image.convert("RGB").save(byte_stream, format="JPEG")
-    st.session_state["current_image_bytes"] = byte_stream.getvalue()
 
 # Auto-analyze all maps button
 if 'processed_data' in st.session_state:
@@ -581,7 +577,7 @@ if 'processed_data' in st.session_state:
             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 # Chat input
-if prompt := st.chat_input("Ask a bot about the indexes or upload a map screenshot to have it explained."):
+if prompt := st.chat_input("Ask about the indexes or use 'Analyze All Maps' for a full AI breakdown."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -591,16 +587,7 @@ if prompt := st.chat_input("Ask a bot about the indexes or upload a map screensh
         full_response = ""
 
         try:
-            image_bytes = st.session_state.get("current_image_bytes")
-            if image_bytes:
-                message_parts = [
-                    types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-                    prompt,
-                ]
-            else:
-                message_parts = prompt
-
-            for chunk in st.session_state.gemini_chat.send_message_stream(message_parts):
+            for chunk in st.session_state.gemini_chat.send_message_stream(prompt):
                 full_response += chunk.text
                 message_placeholder.markdown(full_response + "▌")
 
