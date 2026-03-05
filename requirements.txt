@@ -12,10 +12,7 @@ folium
 
 
 # only import geemap, do not import ee. ee is default in geemap
-# Install from git master: v0.37.1 has a bug where basemaps variable shadows the module import,
-# causing "Box has no attribute xyz_to_folium" on Streamlit re-execution.
-# Master fixed this with `from .basemaps import xyz_to_folium` instead of `from . import basemaps`.
-geemap @ git+https://github.com/gee-community/geemap.git
+geemap
 
 # for authentication with google
 google-auth

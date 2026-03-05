@@ -1,6 +1,12 @@
 import sys
+import os
 from io import StringIO
 sys.modules['StringIO'] = StringIO #applies patch to StringIO for Streamlit Deployment
+
+# Must be set before importing geemap so __init__.py uses foliumap backend,
+# avoiding a namespace collision where geemap.geemap's 'basemaps' Box shadows
+# the geemap.basemaps module and breaks foliumap's xyz_to_folium import.
+os.environ['USE_FOLIUM'] = '1'
 
 import ee
 import streamlit as st
