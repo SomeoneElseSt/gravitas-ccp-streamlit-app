@@ -1,9 +1,6 @@
 #to use streamlit
 streamlit
 
-# only import geemap, do not import ee. ee is default in geemap
-geemap
-
 #to deploy with streamlit
 setuptools
 
@@ -13,8 +10,10 @@ earthengine-api
 #for map display
 folium
 
-# xyzservices is pinned to a version that still has xyz_to_folium (removed in newer versions, breaks geemap.foliumap)
-xyzservices==2022.9.0
+
+# only import geemap, do not import ee. ee is default in geemap
+# geemap >= 0.27.0 uses xyzservices.TileProvider directly (no longer needs xyz_to_folium)
+geemap>=0.27.0
 
 # for authentication with google
 google-auth
