@@ -156,6 +156,11 @@ uhi_map.centerObject(aoi, 11)
 
 st.write("The start and end date comprise the time range of satellite images and data used for analysis.")
 
+ndvi_explanation = "This index highlights the presence and health of vegetation in an area. It is calculated using the reflectance values from the near-infrared (NIR) and red bands of satellite imagery. Healthy vegetation reflects more NIR and absorbs more red light, resulting in a higher NDVI value. Formula: NDVI = (NIR - Red) / (NIR + Red)"
+lst_explanation = "Highlights the map based on the surface temperature of each point using a red-blue scale. The bluer the area, the lesser its temperature, and vice versa with red areas. It is calculated accounting for brightness temperature, emitted radiance, and land surface emissivity. Formula: LST = BT / (1 + (λ * BT / c2) * ln(E))"
+uhi_explanation = "This index categorizes how much hotter a point in a city is relative to the LST mean divided by the LST Standard Deviation. Red spots signal that an urban area has more concentrated heat islands relative to the LST in the rest of the AOI. This mask shows the areas that are artificially hotter due to urban agglomeration. Formula: UHI = (LST - LSTm) / SD"
+utfvi_explanation = "This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself. It helps to measure the ecological feeling of different temperatures in different areas (i.e. how it feels for humans). Formula: UTFVI = (LST - LSTm) / LST"
+
 # Process imagery when user clicks the button
 if st.button("Process Imagery") or 'processed_data' in st.session_state:
     
@@ -322,6 +327,9 @@ if st.button("Process Imagery") or 'processed_data' in st.session_state:
     # Display the map
     st.write("### Urban Heat Index Map")
     st.write("This index highlights areas that are artificially hotter due to urban agglomeration. The legend explains the relative temperature increase by color.")
+    with st.expander("Explanation"):
+        st.write(uhi_explanation)
+        st.latex(r'''UHI = \frac {LST - LSTm} {SD}''')
     uhi_map.to_streamlit(height=500)
     
     # NDVI Map
@@ -348,6 +356,9 @@ if st.button("Process Imagery") or 'processed_data' in st.session_state:
     ndvi_map.add_layer_control()
     st.write("#### NDVI Map")
     st.write("This index highlights the presence and health of vegetation in an area. Higher values (green) indicate healthier vegetation.")
+    with st.expander("Explanation"):
+        st.write(ndvi_explanation)
+        st.latex(r'''NDVI = \frac{NIR - Red}{NIR + Red}''')
     ndvi_map.to_streamlit(height=500)
     
     # LST Map
@@ -381,6 +392,9 @@ if st.button("Process Imagery") or 'processed_data' in st.session_state:
     lst_map.add_layer_control()
     st.write("#### Land Surface Temperature Map")
     st.write("Shows the temperature of the land surface. Cooler areas are blue, warmer areas are red.")
+    with st.expander("Explanation"):
+        st.write(lst_explanation)
+        st.latex(r'''LST = \frac{BT} {(1 + (λ * BT / c2) * ln(E))}''')
     lst_map.to_streamlit(height=500)
 
     # Display LST statistics
@@ -413,6 +427,9 @@ if st.button("Process Imagery") or 'processed_data' in st.session_state:
     utfvi_map.add_layer_control()
     st.write("#### Urban Thermal Field Variance Index Map")
     st.write("This index classifies urban areas by temperature comfort levels as felt by humans, showing which city areas **feel** cooler or hotter than the city/area average.")
+    with st.expander("Explanation"):
+        st.write(utfvi_explanation)
+        st.latex(r'''UTFVI = \frac {LST - LSTm} {LST}''')
     utfvi_map.to_streamlit(height=500)
 else:
     # Create a default map with no layers when the button hasn't been clicked
@@ -420,29 +437,6 @@ else:
     default_map.centerObject(aoi, 11)
     default_map.add_layer_control()
     default_map.to_streamlit(height=500)
-
-ndvi_explanation = "This index highlights the presence and health of vegetation in an area. It is calculated using the reflectance values from the near-infrared (NIR) and red bands of satellite imagery. Healthy vegetation reflects more NIR and absorbs more red light, resulting in a higher NDVI value. Formula: NDVI = (NIR - Red) / (NIR + Red)"
-lst_explanation = "Highlights the map based on the surface temperature of each point using a red-blue scale. The bluer the area, the lesser its temperature, and vice versa with red areas. It is calculated accounting for brightness temperature, emitted radiance, and land surface emissivity. Formula: LST = BT / (1 + (λ * BT / c2) * ln(E))"
-uhi_explanation = "This index categorizes how much hotter a point in a city is relative to the LST mean divided by the LST Standard Deviation. Red spots signal that an urban area has more concentrated heat islands relative to the LST in the rest of the AOI. This mask shows the areas that are artificially hotter due to urban agglomeration. Formula: UHI = (LST - LSTm) / SD"
-utfvi_explanation = "This index further intensifies the UHI effect by quantifying the variation in LST across urban areas. It provides a measure of how temperature fluctuates across an area by comparing LST deviations relative to the LST itself. It helps to measure the ecological feeling of different temperatures in different areas (i.e. how it feels for humans). Formula: UTFVI = (LST - LSTm) / LST"
-
-st.header("How to read")
-
-with st.expander("Urban Heat Index (UHI)"):
-    st.write(uhi_explanation)
-    st.latex(r'''UHI = \frac {LST - LSTm} {SD}''')
-
-with st.expander("Normalized Difference Vegetation Index (NDVI)"):
-    st.write(ndvi_explanation)
-    st.latex(r'''NDVI = \frac{NIR - Red}{NIR + Red}''')
-
-with st.expander("Land Surface Temperature (LST)"):
-    st.write(lst_explanation)
-    st.latex(r'''LST = \frac{BT} {(1 + (λ * BT / c2) * ln(E))}''')
-
-with st.expander("Urban Thermal Field Variance Index (UTFVI)"):
-    st.write(utfvi_explanation)
-    st.latex(r'''UTFVI = \frac {LST - LSTm} {LST}''')
 
 st.subheader("Note: Blank City Spots")
 st.write("For some cities, there are spots that show up as blank or are not properly masked (e.g. Belgrade). This is due to limitations of the Landsat 8 dataset, and is an issue we will look to resolve or circumvent in the future.")
