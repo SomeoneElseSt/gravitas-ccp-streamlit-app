@@ -471,15 +471,15 @@ When analyzing, consider:
 - Urban Thermal Field Variance Index (UTFVI)
 - Surrounding vegetation (NDVI)
 
-When analyzing images:
-- Identify areas of high heat concentration
-- Note patterns in urban heat distribution
-- Comment on potential vegetation impacts
-- Suggest mitigation strategies if relevant
+When analyzing images or answering questions, provide a comprehensive breakdown that includes:
+- Areas to avoid for new development due to high heat stress or poor thermal comfort
+- Areas where adding vegetation or green infrastructure would have the most impact
+- Observed spatial trends (e.g. city center vs periphery, industrial corridors, river proximity)
+- Correlation between indices (e.g. where low NDVI aligns with high UHI)
+- Practical urban planning recommendations grounded in what the data shows
 
-Provide concise, practical insights based on both the thermal analysis data and visual patterns.
-Assume the user is interested in Urban Planning Recommendations.
-Explain what each map shows (e.g. the neighbourhood in red must be avoided for new buildings because it has a high UHI, etc).
+Structure your response clearly with sections. Be specific — reference colors, zones, and patterns visible in the maps rather than speaking in generalities.
+Assume the user is interested in Urban Planning Recommendations and making sense of what the data means for real decisions.
 """
 
 gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -518,6 +518,67 @@ if uploaded_image is not None:
     byte_stream = io.BytesIO()
     image.convert("RGB").save(byte_stream, format="JPEG")
     st.session_state["current_image_bytes"] = byte_stream.getvalue()
+
+# Auto-analyze all maps button
+if 'processed_data' in st.session_state:
+    if st.button("Analyze All Maps with AI 🔍"):
+        data = st.session_state.processed_data
+        thumb_params = {'region': aoi, 'dimensions': 512, 'format': 'png'}
+
+        uhi_legend = "Color scale from blue (cool, -4) to red (hot, +4). Blue = areas cooler than city average, red = severe heat island (>3°C above average)."
+        ndvi_legend = "Color scale from blue (water bodies) to white (bare surfaces/built-up) to green (healthy dense vegetation)."
+        lst_legend = "Color scale from dark blue (7°C, very cool) to dark red (50°C, very hot). Shows absolute land surface temperature."
+        utfvi_legend = "Color scale from blue (cooling effect) to red (high heat stress). Classifies areas by thermal comfort as felt by humans."
+
+        with st.spinner("Fetching map images..."):
+            try:
+                import requests as _requests
+                map_images = {}
+                for name, image_obj, vis in [
+                    ('uhi',   data['uhi'],   data['uhi_vis']),
+                    ('ndvi',  data['ndvi'],  data['ndvi_vis']),
+                    ('lst',   data['lst'],   data['lst_vis']),
+                    ('utfvi', data['utfvi'], data['utfvi_vis']),
+                ]:
+                    url = image_obj.visualize(**vis).getThumbURL(thumb_params)
+                    map_images[name] = _requests.get(url).content
+            except Exception as e:
+                st.error(f"Failed to fetch map thumbnails: {str(e)}")
+                map_images = {}
+
+        if map_images:
+            with st.chat_message("user"):
+                st.markdown("Analyze all 4 maps for this city and date range.")
+            st.session_state.messages.append({"role": "user", "content": "Analyze all 4 maps for this city and date range."})
+
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                full_response = ""
+                try:
+                    message_parts = [
+                        f"Please analyze the following 4 maps for {data['city']}, covering the period from {data['start_date']} to {data['end_date']}.",
+                        "Map 1 - Urban Heat Index (UHI):",
+                        types.Part.from_bytes(data=map_images['uhi'], mime_type="image/png"),
+                        f"Legend for UHI: {uhi_legend}",
+                        "Map 2 - NDVI (Vegetation Index):",
+                        types.Part.from_bytes(data=map_images['ndvi'], mime_type="image/png"),
+                        f"Legend for NDVI: {ndvi_legend}",
+                        "Map 3 - Land Surface Temperature (LST):",
+                        types.Part.from_bytes(data=map_images['lst'], mime_type="image/png"),
+                        f"Legend for LST: {lst_legend}",
+                        "Map 4 - Urban Thermal Field Variance Index (UTFVI):",
+                        types.Part.from_bytes(data=map_images['utfvi'], mime_type="image/png"),
+                        f"Legend for UTFVI: {utfvi_legend}",
+                    ]
+                    for chunk in st.session_state.gemini_chat.send_message_stream(message_parts):
+                        full_response += chunk.text
+                        message_placeholder.markdown(full_response + "▌")
+                    message_placeholder.markdown(full_response)
+                except Exception as e:
+                    full_response = f"An error occurred: {str(e)}"
+                    message_placeholder.markdown(full_response)
+
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 # Chat input
 if prompt := st.chat_input("Ask a bot about the indexes or upload a map screenshot to have it explained."):
