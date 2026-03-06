@@ -41,7 +41,7 @@ from google.genai import types
 
 
 # Create Streamlit app layout
-st.title("Gravitas: Land Surface Temperature And Urban Heat Index Analysis 🛰️ 🌡️ "")
+st.title("Gravitas: Land Surface Temperature And Urban Heat Index Analysis 🛰️ 🌡️ ")
 
 # Streamlit Config
 st.set_page_config(
