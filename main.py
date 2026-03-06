@@ -579,7 +579,12 @@ if 'processed_data' in st.session_state:
             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 # Chat input
-if prompt := st.chat_input("Ask about the indexes or use 'Analyze All Maps' for a full AI breakdown."):
+chat_placeholder = (
+    "Ask about the indices or use 'Analyze All Maps' above for a full AI breakdown."
+    if 'processed_data' in st.session_state
+    else "Ask about the indices or process images to enable a full map-based AI breakdown."
+)
+if prompt := st.chat_input(chat_placeholder):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
