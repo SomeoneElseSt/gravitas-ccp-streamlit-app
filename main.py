@@ -1,3 +1,5 @@
+ASSISTANT_MESSAGE_LIMIT = 10
+
 import sys
 import os
 from io import StringIO
@@ -494,6 +496,9 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 
+assistant_turn_count = sum(1 for m in st.session_state.messages if m["role"] == "assistant")
+limit_reached = assistant_turn_count >= ASSISTANT_MESSAGE_LIMIT
+
 # Auto-analyze all maps button
 if 'processed_data' in st.session_state:
     analyze_clicked = st.button("Analyze All Maps with AI", use_container_width=True)
@@ -528,34 +533,37 @@ if 'processed_data' in st.session_state:
                 st.markdown("Analyze all 4 maps for this city and date range.")
             st.session_state.messages.append({"role": "user", "content": "Analyze all 4 maps for this city and date range."})
 
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                full_response = ""
-                try:
-                    message_parts = [
-                        analysis_intro_template.format(city=data['city'], start_date=data['start_date'], end_date=data['end_date']),
-                        "Map 1 - Urban Heat Index (UHI):",
-                        types.Part.from_bytes(data=map_images['uhi'], mime_type="image/png"),
-                        f"Legend for UHI: {uhi_legend}",
-                        "Map 2 - NDVI (Vegetation Index):",
-                        types.Part.from_bytes(data=map_images['ndvi'], mime_type="image/png"),
-                        f"Legend for NDVI: {ndvi_legend}",
-                        "Map 3 - Land Surface Temperature (LST):",
-                        types.Part.from_bytes(data=map_images['lst'], mime_type="image/png"),
-                        f"Legend for LST: {lst_legend}",
-                        "Map 4 - Urban Thermal Field Variance Index (UTFVI):",
-                        types.Part.from_bytes(data=map_images['utfvi'], mime_type="image/png"),
-                        f"Legend for UTFVI: {utfvi_legend}",
-                    ]
-                    for chunk in st.session_state.gemini_chat.send_message_stream(message_parts):
-                        full_response += chunk.text
-                        message_placeholder.markdown(full_response + "▌")
-                    message_placeholder.markdown(full_response)
-                except Exception as e:
-                    full_response = f"An error occurred: {str(e)}"
-                    message_placeholder.markdown(full_response)
+            if limit_reached:
+                st.info("This is an open source project and the AI assistant is limited to 10 responses per session.", icon="ℹ️")
+            else:
+                with st.chat_message("assistant"):
+                    message_placeholder = st.empty()
+                    full_response = ""
+                    try:
+                        message_parts = [
+                            analysis_intro_template.format(city=data['city'], start_date=data['start_date'], end_date=data['end_date']),
+                            "Map 1 - Urban Heat Index (UHI):",
+                            types.Part.from_bytes(data=map_images['uhi'], mime_type="image/png"),
+                            f"Legend for UHI: {uhi_legend}",
+                            "Map 2 - NDVI (Vegetation Index):",
+                            types.Part.from_bytes(data=map_images['ndvi'], mime_type="image/png"),
+                            f"Legend for NDVI: {ndvi_legend}",
+                            "Map 3 - Land Surface Temperature (LST):",
+                            types.Part.from_bytes(data=map_images['lst'], mime_type="image/png"),
+                            f"Legend for LST: {lst_legend}",
+                            "Map 4 - Urban Thermal Field Variance Index (UTFVI):",
+                            types.Part.from_bytes(data=map_images['utfvi'], mime_type="image/png"),
+                            f"Legend for UTFVI: {utfvi_legend}",
+                        ]
+                        for chunk in st.session_state.gemini_chat.send_message_stream(message_parts):
+                            full_response += chunk.text
+                            message_placeholder.markdown(full_response + "▌")
+                        message_placeholder.markdown(full_response)
+                    except Exception as e:
+                        full_response = f"An error occurred: {str(e)}"
+                        message_placeholder.markdown(full_response)
 
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 # Chat input
 chat_placeholder = (
@@ -568,19 +576,22 @@ if prompt := st.chat_input(chat_placeholder):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
+    if limit_reached:
+        st.info("This is an open source project and the AI assistant is limited to 10 responses per session.", icon="ℹ️")
+    else:
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            full_response = ""
 
-        try:
-            for chunk in st.session_state.gemini_chat.send_message_stream(prompt):
-                full_response += chunk.text
-                message_placeholder.markdown(full_response + "▌")
+            try:
+                for chunk in st.session_state.gemini_chat.send_message_stream(prompt):
+                    full_response += chunk.text
+                    message_placeholder.markdown(full_response + "▌")
 
-            message_placeholder.markdown(full_response)
-        except Exception as e:
-            full_response = f"An error occurred: {str(e)}"
-            message_placeholder.markdown(full_response)
+                message_placeholder.markdown(full_response)
+            except Exception as e:
+                full_response = f"An error occurred: {str(e)}"
+                message_placeholder.markdown(full_response)
 
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
 
