@@ -527,6 +527,7 @@ if 'processed_data' in st.session_state:
         lst_legend = "Color scale from dark blue (7°C, very cool) to dark red (50°C, very hot). Shows absolute land surface temperature."
         utfvi_legend = "Color scale from blue (cooling effect) to red (high heat stress). Classifies areas by thermal comfort as felt by humans."
 
+        st.markdown("<style>div[data-testid='stSpinner'] { text-align: center; }</style>", unsafe_allow_html=True)
         with st.spinner("Fetching map images..."):
             try:
                 import requests as _requests
