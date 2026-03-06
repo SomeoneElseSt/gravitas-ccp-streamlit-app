@@ -1,5 +1,5 @@
 ## Dashboard Flowchart
 
-Below is the system flowchart outlining the system logic:
+The below system flowchart outlines the platform architecture and logic:
 
 ![System Flowchart](gravitas.drawio.svg)
