@@ -582,7 +582,7 @@ if 'processed_data' in st.session_state:
 chat_placeholder = (
     "Ask about the indices or use 'Analyze All Maps' above for a full AI breakdown."
     if 'processed_data' in st.session_state
-    else "Ask about the indices or process images to enable a full map-based AI breakdown."
+    else "Ask about the indices or process images to enable a full AI breakdown."
 )
 if prompt := st.chat_input(chat_placeholder):
     st.session_state.messages.append({"role": "user", "content": prompt})
