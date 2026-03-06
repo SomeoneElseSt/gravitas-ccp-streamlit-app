@@ -1,1 +1,5 @@
+# Secrets
 .streamlit/*
+
+# Legacy diagram
+gravitas_legacy.drawio.svg
