@@ -48,7 +48,8 @@ from google.genai import types
 
 
 # Create Streamlit app layout
-st.title("Gravitas: Land Surface Temperature And Urban Heat Index Analysis 🛰️ 🌡️")
+st.title("Gravitas: Land Surface Temperature And Urban Heat Index Analysis 🛰️")
+
 
 # Create a map
 uhi_map = geemap.Map()
