@@ -12,6 +12,13 @@ os.environ['USE_FOLIUM'] = '1'
 
 import ee
 import streamlit as st
+
+# Streamlit Config - must be called before any other st.* commands
+st.set_page_config(
+    page_title="Gravitas",
+    page_icon="🛰️"
+)
+
 import json
 from google.oauth2 import service_account
 from PIL import Image
@@ -41,13 +48,7 @@ from google.genai import types
 
 
 # Create Streamlit app layout
-st.title("Gravitas: Land Surface Temperature And Urban Heat Index Analysis 🛰️ 🌡️ ")
-
-# Streamlit Config
-st.set_page_config(
-    page_title="Gravitas",
-    page_icon="🛰️"
-)
+st.title("Gravitas: Land Surface Temperature And Urban Heat Index Analysis 🛰️ 🌡️")
 
 # Create a map
 uhi_map = geemap.Map()
