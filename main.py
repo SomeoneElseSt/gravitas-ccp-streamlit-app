@@ -1,4 +1,4 @@
-ASSISTANT_MESSAGE_LIMIT = 10
+ASSISTANT_MESSAGE_LIMIT = 5
 
 import sys
 import os
@@ -452,6 +452,9 @@ st.write("For some cities, there are spots that show up as blank or are not prop
 
 ### Chatbot
 
+ASSISTANT_MESSAGE_LIMIT = 5
+
+
 with open("sys_prompts/agent.txt") as f:
     system_prompt = f.read().format(
         ndvi_explanation=ndvi_explanation,
@@ -502,7 +505,7 @@ limit_reached = assistant_turn_count >= ASSISTANT_MESSAGE_LIMIT
 def send_assistant_message(message_parts):
     """Send message_parts to the AI and stream the response. Enforces the session limit."""
     if limit_reached:
-        st.info("This is an open source project and the AI assistant is limited to 10 responses per session.")
+        st.info(f"This is an open source project and the AI assistant is limited to {ASSISTANT_MESSAGE_LIMIT} responses per session.")
         return
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
