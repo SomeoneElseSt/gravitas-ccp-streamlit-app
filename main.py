@@ -450,37 +450,16 @@ st.write("For some cities, there are spots that show up as blank or are not prop
 
 ### Chatbot
 
-system_prompt = f"""
-You are an expert in urban heat analysis and building thermal patterns.
+with open("sys_prompts/agent.txt") as f:
+    system_prompt = f.read().format(
+        ndvi_explanation=ndvi_explanation,
+        lst_explanation=lst_explanation,
+        uhi_explanation=uhi_explanation,
+        utfvi_explanation=utfvi_explanation,
+    )
 
-Here are the definitions of the indices shown in the app:
-- NDVI: {ndvi_explanation}
-- LST: {lst_explanation}
-- UHI: {uhi_explanation}
-- UTFVI: {utfvi_explanation}
-
-For each user query, ensure they've provided:
-1. Type of building (residential, commercial, industrial, etc.)
-2. Area of interest in the city
-3. Specific analysis request
-
-If any of these are missing, politely ask for the missing information.
-When analyzing, consider:
-- Land Surface Temperature (LST)
-- Urban Heat Island (UHI) effects
-- Urban Thermal Field Variance Index (UTFVI)
-- Surrounding vegetation (NDVI)
-
-When analyzing images or answering questions, provide a comprehensive breakdown that includes:
-- Areas to avoid for new development due to high heat stress or poor thermal comfort
-- Areas where adding vegetation or green infrastructure would have the most impact
-- Observed spatial trends (e.g. city center vs periphery, industrial corridors, river proximity)
-- Correlation between indices (e.g. where low NDVI aligns with high UHI)
-- Practical urban planning recommendations grounded in what the data shows
-
-Structure your response clearly with sections. Be specific — reference colors, zones, and patterns visible in the maps rather than speaking in generalities.
-Assume the user is interested in Urban Planning Recommendations and making sense of what the data means for real decisions.
-"""
+with open("sys_prompts/analysis.txt") as f:
+    analysis_intro_template = f.read()
 
 st.header("Interactive Chatbot")
 st.write("Ask a chatbot about what each metric means and how to interpret the maps.")
@@ -554,7 +533,7 @@ if 'processed_data' in st.session_state:
                 full_response = ""
                 try:
                     message_parts = [
-                        f"Please analyze the following 4 maps for {data['city']}, covering the period from {data['start_date']} to {data['end_date']}.",
+                        analysis_intro_template.format(city=data['city'], start_date=data['start_date'], end_date=data['end_date']),
                         "Map 1 - Urban Heat Index (UHI):",
                         types.Part.from_bytes(data=map_images['uhi'], mime_type="image/png"),
                         f"Legend for UHI: {uhi_legend}",

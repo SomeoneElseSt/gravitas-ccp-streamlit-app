@@ -1,0 +1,1 @@
+Please analyze the following 4 maps for {city}, covering the period from {start_date} to {end_date}.
