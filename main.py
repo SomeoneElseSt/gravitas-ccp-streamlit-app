@@ -1,5 +1,3 @@
-ASSISTANT_MESSAGE_LIMIT = 5
-
 import sys
 import os
 from io import StringIO
